@@ -1,0 +1,7 @@
+## Interface: 100105
+## Version: 1.0
+## Title: Find Hidden Spells
+## Notes: Finds Hidden Spells that are castable for a player but not located anywhere in the UI.
+## Author: Jesse
+
+FindHiddenSpells.lua
