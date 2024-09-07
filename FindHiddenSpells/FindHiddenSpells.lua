@@ -59,37 +59,48 @@ spellMsg:SetAutoFocus(false)
 spellMsg:SetMultiLine(true)
 
 local PostSpell = 0
+local batchSize = 1000  -- Number of spellIDs to check in each batch
 local function findHiddenSpells(startID, endID)
-    local msg = ""
-    for i = startID, endID do
-        local name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = C_Spell.GetSpellInfo(i)
-        local usable, nomana = C_Spell.IsSpellUsable(i)
-        C_Spell.PickupSpell(i)
+    local currentID = startID
 
-        if CursorHasSpell() then
-            if not C_Spell.IsSpellPassive(i) then
-                PlaceAction(1, 1)
-                if usable and PostSpell ~= i then
-                    msg = msg .. "[" .. i .. "] - " .. (C_Spell.GetSpellLink(i) or "! [" .. name .. "]") .. "\n"
-                    PostSpell = i
+    local function scanBatch()
+        local msg = ""
+        for i = currentID, math.min(currentID + batchSize - 1, endID) do
+            local name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = C_Spell.GetSpellInfo(i)
+            local usable, nomana = C_Spell.IsSpellUsable(i)
+            C_Spell.PickupSpell(i)
+
+            if CursorHasSpell() then
+                if not C_Spell.IsSpellPassive(i) then
+                    PlaceAction(1, 1)
+                    if usable and PostSpell ~= i then
+                        msg = msg .. "[" .. i .. "] - " .. (C_Spell.GetSpellLink(i) or "! [" .. name .. "]") .. "\n"
+                        PostSpell = i
+                    end
+                    ClearCursor()
                 end
-                ClearCursor()
             end
         end
+        spellMsg:SetText(spellMsg:GetText() .. msg)
+
+        local fontHeight = select(2, spellMsg:GetFont())
+        local numLetters = spellMsg:GetNumLetters()
+        local spacing = spellMsg:GetSpacing()
+        local height = numLetters * (fontHeight + spacing)
+        spellScrollChild:SetHeight(height)
+
+        currentID = currentID + batchSize
+        if currentID <= endID then
+            C_Timer.After(0.1, scanBatch)  -- Pause for 0.1 seconds before the next batch
+        end
     end
-    spellMsg:SetText(msg)
 
-    local fontHeight = select(2, spellMsg:GetFont())
-    local numLetters = spellMsg:GetNumLetters()
-    local spacing = spellMsg:GetSpacing()
-    local height = numLetters * (fontHeight + spacing)
-
-    spellScrollChild:SetHeight(height)
+    scanBatch()  -- Start the first batch
 end
+
 
 scanButton:SetScript("OnClick", function()
     findHiddenSpells(1, 450000)
-    -- script will run for too long have no idea how to fix this
 end)
 
 local copyButton = CreateFrame("Button", "FindHiddenSpellsCopyButton", spellFrame, "UIPanelButtonTemplate")
