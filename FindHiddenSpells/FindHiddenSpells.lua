@@ -62,15 +62,15 @@ local PostSpell = 0
 local function findHiddenSpells(startID, endID)
     local msg = ""
     for i = startID, endID do
-        local name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(i)
-        local usable, nomana = IsUsableSpell(i)
-        PickupSpell(i)
+        local name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = C_Spell.GetSpellInfo(i)
+        local usable, nomana = C_Spell.IsSpellUsable(i)
+        C_Spell.PickupSpell(i)
 
         if CursorHasSpell() then
-            if not IsPassiveSpell(i) then
+            if not C_Spell.IsSpellPassive(i) then
                 PlaceAction(1, 1)
                 if usable and PostSpell ~= i then
-                    msg = msg .. "[" .. i .. "] - " .. (GetSpellLink(i) or "! [" .. name .. "]") .. "\n"
+                    msg = msg .. "[" .. i .. "] - " .. (C_Spell.GetSpellLink(i) or "! [" .. name .. "]") .. "\n"
                     PostSpell = i
                 end
                 ClearCursor()
@@ -89,6 +89,7 @@ end
 
 scanButton:SetScript("OnClick", function()
     findHiddenSpells(1, 450000)
+    -- script will run for too long have no idea how to fix this
 end)
 
 local copyButton = CreateFrame("Button", "FindHiddenSpellsCopyButton", spellFrame, "UIPanelButtonTemplate")
@@ -96,10 +97,12 @@ copyButton:SetSize(100, 30)
 copyButton:SetPoint("TOPRIGHT", -10, -10)
 copyButton:SetText("Menu")
 copyButton:SetScript("OnClick", function()
-    InterfaceOptionsFrame_OpenToCategory(optionsFrame)
+    Settings.OpenToCategory(optionsFrame)
 end)
 
-InterfaceOptions_AddCategory(optionsFrame)
+local category, layout = Settings.RegisterCanvasLayoutCategory(optionsFrame, optionsFrame.name, optionsFrame.name);
+category.ID = optionsFrame.name;
+Settings.RegisterAddOnCategory(category);
 
 optionsFrame:RegisterEvent("ADDON_LOADED")
 optionsFrame:SetScript("OnEvent", function(self, event, addon)
