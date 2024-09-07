@@ -74,12 +74,9 @@ local PostSpell = 0
 local batchSize = 1000  -- Number of spellIDs to check in each batch
 local spellLines = {}  -- Initialize spellLines as an empty table
 
-local PostSpell = 0
-local batchSize = 1000  -- Number of spellIDs to check in each batch
-
 local function findHiddenSpells(startID, endID)
     local currentID = startID
-
+    
     local function scanBatch()
         local msg = ""
         for i = currentID, math.min(currentID + batchSize - 1, endID) do
@@ -95,7 +92,7 @@ local function findHiddenSpells(startID, endID)
                             -- Add clickable spell link
                             local spellLink = C_Spell.GetSpellLink(i) or ("! [" .. spellInfo.name .. "]")
                             local iconTexture = "|T" .. spellInfo.iconID .. ":20|t"
-                            msg = msg .. iconTexture .. spellInfo.spellID .. " " .. spellLink .. "\n"
+                            msg = msg .. iconTexture .. spellInfo.spellID .." " .. spellLink .. "\n"
                             PostSpell = i
                         end
                         ClearCursor()
@@ -110,22 +107,19 @@ local function findHiddenSpells(startID, endID)
         local spacing = spellMsg:GetSpacing()
         local height = fontHeight + spacing
         spellScrollChild:SetHeight(height)
-
+        
         currentID = currentID + batchSize
         if currentID <= endID then
             C_Timer.After(0.1, scanBatch)
         end
     end
-
+    
     scanBatch()
 end
 
-
 scanButton:SetScript("OnClick", function()
-    findHiddenSpells(1, 450000)
+    findHiddenSpells(99, 450000)
 end)
-
-
 
 local copyButton = CreateFrame("Button", "FindHiddenSpellsCopyButton", spellFrame, "UIPanelButtonTemplate")
 copyButton:SetSize(100, 30)
