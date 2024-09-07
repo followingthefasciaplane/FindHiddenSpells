@@ -58,29 +58,52 @@ spellMsg:SetFontObject("GameFontHighlight")
 spellMsg:SetAutoFocus(false)
 spellMsg:SetMultiLine(true)
 
+-- Ensure the EditBox is set to handle hyperlinks
+spellMsg:SetHyperlinksEnabled(true)
+
+-- Set a script to handle when a link is clicked
+spellMsg:SetScript("OnHyperlinkClick", function(self, linkData, link, button)
+    -- Handle the link click (e.g., show the tooltip or open a link in chat)
+    if button == "LeftButton" then
+        ChatFrame1:AddMessage("Clicked link: " .. link)
+        SetItemRef(linkData, link, button)
+    end
+end)
+
 local PostSpell = 0
 local batchSize = 1000  -- Number of spellIDs to check in each batch
+local spellLines = {}  -- Initialize spellLines as an empty table
+
+local PostSpell = 0
+local batchSize = 1000  -- Number of spellIDs to check in each batch
+
 local function findHiddenSpells(startID, endID)
     local currentID = startID
 
     local function scanBatch()
         local msg = ""
         for i = currentID, math.min(currentID + batchSize - 1, endID) do
-            local name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = C_Spell.GetSpellInfo(i)
-            local usable, nomana = C_Spell.IsSpellUsable(i)
+            local spellInfo = C_Spell.GetSpellInfo(i) -- table [name, rank, iconID, castTime, minRange, maxRange, spellID, originalIconID]
+            local spellIsUsable = C_Spell.IsSpellUsable(i) -- boolean
             C_Spell.PickupSpell(i)
 
-            if CursorHasSpell() then
-                if not C_Spell.IsSpellPassive(i) then
-                    PlaceAction(1, 1)
-                    if usable and PostSpell ~= i then
-                        msg = msg .. "[" .. i .. "] - " .. (C_Spell.GetSpellLink(i) or "! [" .. name .. "]") .. "\n"
-                        PostSpell = i
+            if spellInfo then
+                if CursorHasSpell() then
+                    if not C_Spell.IsSpellPassive(i) then
+                        PlaceAction(1, 1)
+                        if spellIsUsable and PostSpell ~= i then
+                            -- Add clickable spell link
+                            local spellLink = C_Spell.GetSpellLink(i) or ("! [" .. spellInfo.name .. "]")
+                            local iconTexture = "|T" .. spellInfo.iconID .. ":20|t"
+                            msg = msg .. iconTexture .. spellInfo.spellID .. " " .. spellLink .. "\n"
+                            PostSpell = i
+                        end
+                        ClearCursor()
                     end
-                    ClearCursor()
                 end
             end
         end
+
         spellMsg:SetText(spellMsg:GetText() .. msg)
 
         local fontHeight = select(2, spellMsg:GetFont())
@@ -97,9 +120,12 @@ local function findHiddenSpells(startID, endID)
     scanBatch()
 end
 
+
 scanButton:SetScript("OnClick", function()
-    findHiddenSpells(1, 2000)
+    findHiddenSpells(1, 450000)
 end)
+
+
 
 local copyButton = CreateFrame("Button", "FindHiddenSpellsCopyButton", spellFrame, "UIPanelButtonTemplate")
 copyButton:SetSize(100, 30)
