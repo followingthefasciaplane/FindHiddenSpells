@@ -84,23 +84,21 @@ local function findHiddenSpells(startID, endID)
         spellMsg:SetText(spellMsg:GetText() .. msg)
 
         local fontHeight = select(2, spellMsg:GetFont())
-        local numLetters = spellMsg:GetNumLetters()
         local spacing = spellMsg:GetSpacing()
-        local height = numLetters * (fontHeight + spacing)
+        local height = fontHeight + spacing
         spellScrollChild:SetHeight(height)
 
         currentID = currentID + batchSize
         if currentID <= endID then
-            C_Timer.After(0.1, scanBatch)  -- Pause for 0.1 seconds before the next batch
+            C_Timer.After(0.1, scanBatch)
         end
     end
 
-    scanBatch()  -- Start the first batch
+    scanBatch()
 end
 
-
 scanButton:SetScript("OnClick", function()
-    findHiddenSpells(1, 450000)
+    findHiddenSpells(1, 2000)
 end)
 
 local copyButton = CreateFrame("Button", "FindHiddenSpellsCopyButton", spellFrame, "UIPanelButtonTemplate")
@@ -108,7 +106,7 @@ copyButton:SetSize(100, 30)
 copyButton:SetPoint("TOPRIGHT", -10, -10)
 copyButton:SetText("Menu")
 copyButton:SetScript("OnClick", function()
-    Settings.OpenToCategory(optionsFrame)
+    Settings.OpenToCategory(optionsFrame.name)
 end)
 
 local category, layout = Settings.RegisterCanvasLayoutCategory(optionsFrame, optionsFrame.name, optionsFrame.name);
